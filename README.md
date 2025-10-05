@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# UIB INFO212 System Development Project, made with Lovable
 
 ## Project info
 
