@@ -54,7 +54,7 @@ const Index = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Bergen Bars
+                Baradvisor
               </h1>
               <p className="text-sm text-muted-foreground">Discover the best bars in Bergen</p>
             </div>
