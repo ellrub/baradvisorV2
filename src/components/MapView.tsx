@@ -28,8 +28,8 @@ const MapView = ({ bars, selectedBar, onBarSelect, favorites }: MapViewProps) =>
 
     // Initialize map
     map.current = L.map(mapContainer.current, {
-      center: [60.3913, 5.3241],
-      zoom: 14,
+      center: [60.391505, 5.321170],
+      zoom: 16,
       zoomControl: true,
     });
 
@@ -62,7 +62,7 @@ const MapView = ({ bars, selectedBar, onBarSelect, favorites }: MapViewProps) =>
       const customIcon = L.divIcon({
         className: 'custom-marker',
         html: `
-          <div style="
+          <div class="marker-pin" style="
             width: 40px;
             height: 40px;
             background-image: url('${bar.image}');
@@ -72,8 +72,8 @@ const MapView = ({ bars, selectedBar, onBarSelect, favorites }: MapViewProps) =>
             border: 3px solid ${favorites.has(bar.id) ? 'hsl(32, 95%, 58%)' : 'white'};
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
-          " class="marker-pin"></div>
+            transition: transform 0.2s ease-in-out;
+          "></div>
         `,
         iconSize: [40, 40],
         iconAnchor: [20, 20],
@@ -87,14 +87,20 @@ const MapView = ({ bars, selectedBar, onBarSelect, favorites }: MapViewProps) =>
         onBarSelect(bar);
       });
 
-      // Add hover effect
-      marker.getElement()?.addEventListener('mouseenter', (e) => {
-        (e.currentTarget as HTMLElement).style.transform = 'scale(1.2)';
-      });
+      // Add hover effect to the inner pin element, not the marker container
+      const markerElement = marker.getElement();
+      if (markerElement) {
+        const pinElement = markerElement.querySelector('.marker-pin') as HTMLElement;
+        if (pinElement) {
+          markerElement.addEventListener('mouseenter', () => {
+            pinElement.style.transform = 'scale(1.2)';
+          });
 
-      marker.getElement()?.addEventListener('mouseleave', (e) => {
-        (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-      });
+          markerElement.addEventListener('mouseleave', () => {
+            pinElement.style.transform = 'scale(1)';
+          });
+        }
+      }
 
       markersRef.current.push(marker);
     });
@@ -122,6 +128,7 @@ const MapView = ({ bars, selectedBar, onBarSelect, favorites }: MapViewProps) =>
         }
         .marker-pin {
           transition: transform 0.2s ease-in-out;
+          transform-origin: center center;
         }
       `}</style>
     </div>

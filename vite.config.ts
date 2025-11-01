@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      // Proxy Yelp API requests to avoid CORS issues
+      '/api/yelp': {
+        target: 'https://api.yelp.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/yelp/, ''),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

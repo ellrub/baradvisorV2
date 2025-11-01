@@ -1,5 +1,15 @@
 export type BarType = 'Cocktail' | 'Pub' | 'Sports' | 'Wine' | 'Craft-beer' | 'Nightclub';
 
+export interface BusinessHours {
+  is_open_now: boolean;
+  hours: Array<{
+    day: number; // 0-6 (Monday-Sunday)
+    start: string; // "1530" format
+    end: string; // "0100" format
+    is_overnight: boolean;
+  }>;
+}
+
 export interface Bar {
   id: string;
   name: string;
@@ -10,6 +20,12 @@ export interface Bar {
   image: string;
   description: string;
   priceLevel: number; // 1-3
+  phone?: string;
+  displayPhone?: string;
+  distance?: number; // in meters
+  categories?: string[]; // Array of category titles
+  businessHours?: BusinessHours;
+  isOpenNow?: boolean;
 }
 
 export const bars: Bar[] = [
@@ -45,7 +61,7 @@ export const bars: Bar[] = [
     image: 'https://lh3.googleusercontent.com/p/AF1QipOzeLC9Z_2OHvrRi7VdYbj5VYf4_Vr3irqAM2jL=s680-w680-h510-rw',
     description: 'No Stress is a local cocktail pub with multiple locations, offering sweet cocktails, a cozy atmosphere, and events like music bingo and Mario Kart.',
     priceLevel: 2,
-  },,
+  },
   {
     id: '4',
     name: 'Naboen',

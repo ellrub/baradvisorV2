@@ -33,3 +33,14 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Leaflet (for maps)
+- Yelp Fusion API (for bar data)
+
+## 🔑 Setup
+
+1. Get a free Yelp API key: https://www.yelp.com/developers/v3/manage_app
+2. Copy `.env.example` to `.env`
+3. Add your Yelp API key to `.env`
+4. Run `npm run dev`
+
+See `YELP_SETUP.md` for detailed setup instructions.
