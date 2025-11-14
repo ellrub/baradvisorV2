@@ -11,10 +11,37 @@ interface BarDetailProps {
   isFavorite: boolean;
   onToggleFavorite: (barId: string) => void;
   onClose: () => void;
+  userLocation?: { latitude: number; longitude: number } | null;
+  onShowRoute?: (bar: Bar) => void;
 }
 
-const BarDetail = ({ bar, isFavorite, onToggleFavorite, onClose }: BarDetailProps) => {
+const BarDetail = ({ bar, isFavorite, onToggleFavorite, onClose, userLocation, onShowRoute }: BarDetailProps) => {
   const [showReviewsInfo, setShowReviewsInfo] = useState(false);
+  
+  const handleGetDirections = () => {
+    // If we have the onShowRoute callback, use map routing
+    if (onShowRoute && userLocation) {
+      onShowRoute(bar);
+      return;
+    }
+    
+    // Fallback to Google Maps if no route handler or user location
+    const [lng, lat] = bar.coordinates;
+    if (userLocation) {
+      const origin = `${userLocation.latitude},${userLocation.longitude}`;
+      const destination = `${lat},${lng}`;
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=walking`,
+        '_blank'
+      );
+    } else {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+        '_blank'
+      );
+    }
+  };
+  
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm animate-in fade-in duration-300 md:relative md:bg-transparent md:backdrop-blur-none">
       <div className="h-full overflow-y-auto">
@@ -70,7 +97,7 @@ const BarDetail = ({ bar, isFavorite, onToggleFavorite, onClose }: BarDetailProp
                   <span className="text-xs text-muted-foreground">per drink</span>
                 </div>
               </div>
-              <Button size="sm">
+              <Button size="sm" onClick={handleGetDirections}>
                 Get Directions
               </Button>
             </div>

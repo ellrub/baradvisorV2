@@ -1,4 +1,5 @@
 import { Bar, BarType } from '../data/bars';
+import { Coordinates } from '../hooks/use-geolocation';
 
 const YELP_API_KEY = import.meta.env.VITE_YELP_API_KEY;
 // Use proxy in development to avoid CORS issues
@@ -8,12 +9,6 @@ const YELP_API_URL = import.meta.env.DEV
 const YELP_BUSINESS_URL = import.meta.env.DEV
   ? '/api/yelp/v3/businesses'
   : 'https://api.yelp.com/v3/businesses';
-
-// Bergen, Norway coordinates
-const BERGEN_COORDINATES = {
-  latitude: 60.3913,
-  longitude: 5.3221,
-};
 
 // Map Yelp categories to our BarType
 const categoryToBarType: Record<string, BarType> = {
@@ -183,9 +178,10 @@ function convertToBar(business: YelpBusiness): Bar {
 }
 
 /**
- * Fetches bars from Yelp API in Bergen area
+ * Fetches bars from Yelp API based on user's location
  */
 export async function fetchBarsFromYelp(
+  userCoordinates: Coordinates,
   radius: number = 5000, // 5km radius (max 40000 meters)
   limit: number = 50
 ): Promise<Bar[]> {
@@ -197,8 +193,8 @@ export async function fetchBarsFromYelp(
 
   try {
     const params = new URLSearchParams({
-      latitude: BERGEN_COORDINATES.latitude.toString(),
-      longitude: BERGEN_COORDINATES.longitude.toString(),
+      latitude: userCoordinates.latitude.toString(),
+      longitude: userCoordinates.longitude.toString(),
       radius: Math.min(radius, 40000).toString(), // Yelp max is 40km
       categories: 'bars,cocktailbars,pubs,sportsbars,winebars,breweries,brewpubs,lounges',
       limit: Math.min(limit, 50).toString(), // Yelp max is 50 per request
@@ -206,6 +202,7 @@ export async function fetchBarsFromYelp(
     });
 
     console.log('🔍 Fetching from Yelp:', `${YELP_API_URL}?${params}`);
+    console.log('📍 User location:', userCoordinates);
     console.log('🔑 Using API key:', `${YELP_API_KEY.slice(0, 10)}...`);
     
     const response = await fetch(`${YELP_API_URL}?${params}`, {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Map, List, Heart, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Map, List, Heart, AlertCircle, Home } from 'lucide-react';
 import { Bar, BarType } from '@/data/bars';
 import { useBars } from '@/hooks/use-bars';
 import MapView from '@/components/MapView';
@@ -7,12 +7,25 @@ import BarCard from '@/components/BarCard';
 import BarDetail from '@/components/BarDetail';
 import FilterBar from '@/components/FilterBar';
 import FilterDialog, { SortOption } from '@/components/FilterDialog';
+import StartPage from './StartPage';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
-  const { bars, loading, error, refetch, usingMockData } = useBars();
+  const [selectedLocation, setSelectedLocation] = useState<{
+    coordinates: { latitude: number; longitude: number };
+    name?: string;
+  } | null>(null);
+
+  const [radius, setRadius] = useState<number>(500); // 500m default
+
+  const { bars, loading, error, refetch, usingMockData, userLocation } = useBars({
+    coordinates: selectedLocation?.coordinates || null,
+    radius: radius, // Use the radius state
+  });
+  
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [selectedBar, setSelectedBar] = useState<Bar | null>(null);
   const [view, setView] = useState<'map' | 'list'>('list');
@@ -21,6 +34,32 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [minRating, setMinRating] = useState<number>(0);
   const [openOnly, setOpenOnly] = useState<boolean>(false);
+  const [routeToBar, setRouteToBar] = useState<Bar | null>(null);
+
+  const handleLocationSelected = (
+    coordinates: { latitude: number; longitude: number },
+    locationName?: string
+  ) => {
+    setSelectedLocation({ coordinates, name: locationName });
+  };
+
+  const handleLocationChange = (coordinates: { latitude: number; longitude: number }) => {
+    setSelectedLocation({ 
+      coordinates, 
+      name: `New Location (${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})` 
+    });
+    
+    // Show toast notification
+    toast({
+      title: "Location updated",
+      description: `Searching for bars near (${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})`,
+      duration: 3000,
+    });
+  };
+
+  const handleBackToStart = () => {
+    setSelectedLocation(null);
+  };
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -109,21 +148,38 @@ const Index = () => {
       }
     });
 
+  // Show start page if no location is selected
+  if (!selectedLocation) {
+    return <StartPage onLocationSelected={handleLocationSelected} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card border-b border-border backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Baradvisor
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Discover the best bars in Bergen 
-                {loading && ' • Loading...'}
-                {usingMockData && ' • Using demo data'}
-              </p>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToStart}
+                className="hover:bg-primary/10"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Change Location
+              </Button>
+              <div className="h-6 w-px bg-border" />
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  Baradvisor
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {selectedLocation.name || 'Selected location'}
+                  {loading && ' • Loading...'}
+                  {usingMockData && ' • Using demo data'}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <FilterDialog
@@ -167,6 +223,17 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 pb-8">
+        {/* Location Info Alert */}
+        {userLocation && !error && (
+          <Alert className="mb-4 bg-primary/10 border-primary/20">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Searching within 0.5km radius</AlertTitle>
+            <AlertDescription>
+              Showing bars near {selectedLocation.name || `(${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)})`}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Error Alert */}
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -204,6 +271,11 @@ const Index = () => {
                   selectedBar={selectedBar}
                   onBarSelect={setSelectedBar}
                   favorites={favorites}
+                  userLocation={userLocation}
+                  onLocationChange={handleLocationChange}
+                  radius={radius}
+                  routeToBar={routeToBar}
+                  onRouteClose={() => setRouteToBar(null)}
                 />
               </div>
             ) : (
@@ -242,6 +314,12 @@ const Index = () => {
               isFavorite={favorites.has(selectedBar.id)}
               onToggleFavorite={toggleFavorite}
               onClose={() => setSelectedBar(null)}
+              userLocation={userLocation}
+              onShowRoute={(bar) => {
+                setRouteToBar(bar);
+                setView('map');
+                setSelectedBar(null);
+              }}
             />
           </div>
         </div>
