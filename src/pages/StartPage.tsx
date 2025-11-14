@@ -35,11 +35,29 @@ const StartPage = ({ onLocationSelected }: StartPageProps) => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        onLocationSelected({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        }, 'Your Location');
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        
+        // Try to get city name via reverse geocoding
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
+          );
+          const data = await response.json();
+          const cityName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || 'Your Location';
+          
+          onLocationSelected({
+            latitude,
+            longitude,
+          }, cityName);
+        } catch (err) {
+          // If reverse geocoding fails, just use "Your Location"
+          onLocationSelected({
+            latitude,
+            longitude,
+          }, 'Your Location');
+        }
         setIsLoadingLocation(false);
       },
       (error) => {

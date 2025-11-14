@@ -248,12 +248,17 @@ const MapView = ({ bars, selectedBar, onBarSelect, favorites, userLocation, onLo
         },
         show: true,
         collapsible: true,
+        // Hide the default waypoint markers - we use our own
+        createMarker: function() {
+          return null;
+        },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         router: (L.Routing as any).osrmv1({
           serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1',
           // German OSRM server with foot profile for walking directions
         })
-      }).addTo(map.current);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any).addTo(map.current);
 
       // Customize the instructions panel to match app design
       const container = routingControlRef.current.getContainer();

@@ -43,18 +43,41 @@ const Index = () => {
     setSelectedLocation({ coordinates, name: locationName });
   };
 
-  const handleLocationChange = (coordinates: { latitude: number; longitude: number }) => {
+  const handleLocationChange = async (coordinates: { latitude: number; longitude: number }) => {
+    // Optimistically update with coordinates first
     setSelectedLocation({ 
       coordinates, 
-      name: `New Location (${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})` 
+      name: `(${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})` 
     });
     
-    // Show toast notification
-    toast({
-      title: "Location updated",
-      description: `Searching for bars near (${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})`,
-      duration: 3000,
-    });
+    // Try to get city name via reverse geocoding
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&zoom=10`
+      );
+      const data = await response.json();
+      const cityName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || `(${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})`;
+      
+      // Update with actual city name
+      setSelectedLocation({ 
+        coordinates, 
+        name: cityName 
+      });
+      
+      // Show toast notification with city name
+      toast({
+        title: "Location updated",
+        description: `Searching for bars near ${cityName}`,
+        duration: 3000,
+      });
+    } catch (err) {
+      // Show toast notification with coordinates if geocoding fails
+      toast({
+        title: "Location updated",
+        description: `Searching for bars near (${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})`,
+        duration: 3000,
+      });
+    }
   };
 
   const handleBackToStart = () => {
@@ -166,8 +189,8 @@ const Index = () => {
                 onClick={handleBackToStart}
                 className="hover:bg-primary/10"
               >
-                <Home className="w-4 h-4 mr-2" />
-                Change Location
+                <Home className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Change Location</span>
               </Button>
               <div className="h-6 w-px bg-border" />
               <div>
@@ -308,7 +331,7 @@ const Index = () => {
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             onClick={() => setSelectedBar(null)}
           />
-          <div className="relative w-full md:max-w-2xl md:rounded-lg md:overflow-hidden animate-in slide-in-from-bottom duration-300 md:animate-in md:zoom-in-95">
+          <div className="relative w-full h-full md:h-auto md:max-w-2xl md:rounded-lg overflow-hidden animate-in slide-in-from-bottom duration-300 md:animate-in md:zoom-in-95">
             <BarDetail
               bar={selectedBar}
               isFavorite={favorites.has(selectedBar.id)}
